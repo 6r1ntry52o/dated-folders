@@ -14,8 +14,8 @@ Create new notes directly in a date-based folder such as `notes/2026/09/19`, cho
 |---|---|
 | Base folder | Root of the dated tree. Empty means the vault root. |
 | Granularity | year / month / week / day |
-| Week starts on | Monday or Sunday (week granularity only) |
-| Append ISO week number | Name week folders `DD(Wnn)` with the ISO 8601 week number. For Sunday weeks the Monday inside that week decides the number. |
+| Append ISO week number | Name week folders `DD(Wnn)` with the ISO 8601 week number. ISO weeks start on Monday, so this fixes the week start to Monday. |
+| Week starts on | Monday or Sunday (week granularity only; locked to Monday while ISO week numbers are on) |
 | Placement method | Automatic (recommended), direct placement only, or move after creation only |
 | Apply to notes created from links | Route `[[link]]`-created notes too. Links containing a folder are always respected. |
 | File extensions | Default `md`. Add `canvas` to route new canvases. |

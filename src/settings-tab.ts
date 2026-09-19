@@ -75,27 +75,29 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 
 		if (s.grain === 'week') {
 			new Setting(containerEl)
+				.setName('Append ISO week number')
+				.setDesc('Name the week folder "DD(Wnn)" with the ISO 8601 week number (1–53). ISO weeks always start on Monday, so this fixes the week start to Monday.')
+				.addToggle((t) =>
+					t.setValue(s.weekNumber).onChange(async (value) => {
+						s.weekNumber = value;
+						await save();
+						this.display();
+					}),
+				);
+			new Setting(containerEl)
 				.setName('Week starts on')
-				.addDropdown((dd) =>
-					dd
-						.addOptions({ '1': 'Monday', '0': 'Sunday' })
-						.setValue(String(s.weekStart))
+				.setDesc(s.weekNumber ? 'Fixed to Monday while ISO week numbers are on.' : '')
+				.setDisabled(s.weekNumber)
+				.addDropdown((dd) => {
+					dd.addOptions({ '1': 'Monday', '0': 'Sunday' })
+						.setValue(s.weekNumber ? '1' : String(s.weekStart))
+						.setDisabled(s.weekNumber)
 						.onChange(async (value) => {
 							s.weekStart = Number(value) as WeekStart;
 							refreshPreview();
 							await save();
-						}),
-				);
-			new Setting(containerEl)
-				.setName('Append ISO week number')
-				.setDesc('Name the week folder "DD(Wnn)" with the ISO 8601 week number (1–53). With Sunday weeks, the number of the Monday in that week is used.')
-				.addToggle((t) =>
-					t.setValue(s.weekNumber).onChange(async (value) => {
-						s.weekNumber = value;
-						refreshPreview();
-						await save();
-					}),
-				);
+						});
+				});
 		}
 
 		const preview = new Setting(containerEl).setName('Preview').setDesc('A note created right now would go to:');

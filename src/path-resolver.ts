@@ -26,22 +26,21 @@ export function isoWeek(date: Date): number {
 	return 1 + Math.round((d.getTime() - firstThu.getTime()) / (7 * 86_400_000));
 }
 
-/**
- * 週フォルダに付ける週番号。月曜始まりなら開始日の ISO 週番号。
- * 日曜始まりならその週に含まれる月曜日（開始日+1）の ISO 週番号＝ISO 番号を 1 日ずらして使う。
- */
-export function weekNumberOf(weekStartDate: Date, weekStart: WeekStart): number {
-	const monday = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate() + (weekStart === 0 ? 1 : 0));
-	return isoWeek(monday);
-}
-
 export interface PathOptions {
-	/** week 粒度のとき末尾に "(Wnn)" を付ける（ISO 週番号・2桁ゼロ埋め） */
+	/**
+	 * week 粒度のとき末尾に "(Wnn)" を付ける（ISO 8601 週番号・2桁ゼロ埋め）。
+	 * ISO 週は月曜始まりで定義されるため、ON のときは weekStart を無視して**月曜固定**にする（厳密 ISO）。
+	 */
 	weekNumber?: boolean;
 }
 
+/** 実際に使う週の開始曜日。ISO 週番号 ON なら常に月曜 */
+export function effectiveWeekStart(weekStart: WeekStart, opts: PathOptions = {}): WeekStart {
+	return opts.weekNumber ? 1 : weekStart;
+}
+
 export function datedSegments(grain: Grain, now: Date, weekStart: WeekStart, opts: PathOptions = {}): string[] {
-	const b = grain === 'week' ? weekStartOf(now, weekStart) : now;
+	const b = grain === 'week' ? weekStartOf(now, effectiveWeekStart(weekStart, opts)) : now;
 	const y = String(b.getFullYear());
 	const m = pad2(b.getMonth() + 1);
 	const d = pad2(b.getDate());
@@ -51,7 +50,7 @@ export function datedSegments(grain: Grain, now: Date, weekStart: WeekStart, opt
 		case 'month':
 			return [y, m];
 		case 'week':
-			return [y, m, opts.weekNumber ? `${d}(W${pad2(weekNumberOf(b, weekStart))})` : d];
+			return [y, m, opts.weekNumber ? `${d}(W${pad2(isoWeek(b))})` : d];
 		case 'day':
 			return [y, m, d];
 	}

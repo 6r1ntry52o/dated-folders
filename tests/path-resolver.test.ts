@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { datedSegments, isoWeek, msUntilNextMidnight, resolveDatedPath, weekNumberOf, weekStartOf, type Grain, type WeekStart } from '../src/path-resolver';
+import { datedSegments, effectiveWeekStart, isoWeek, msUntilNextMidnight, resolveDatedPath, weekStartOf, type Grain, type WeekStart } from '../src/path-resolver';
 
 const d = (y: number, m: number, day: number, h = 12): Date => new Date(y, m - 1, day, h, 0, 0);
 
@@ -55,25 +55,29 @@ describe('isoWeek', () => {
 	])('%o → W%i', (date, week) => expect(isoWeek(date)).toBe(week));
 });
 
-describe('weekNumberOf', () => {
-	it('Monday-start uses the start date itself', () => {
-		expect(weekNumberOf(d(2026, 9, 14), 1)).toBe(38);
-	});
-	it('Sunday-start uses the Monday inside the week', () => {
-		expect(weekNumberOf(d(2026, 9, 13), 0)).toBe(38); // 9/13(日)〜9/19(土) → 月曜 9/14 → W38
-		expect(weekNumberOf(d(2026, 1, 4), 0)).toBe(2); // 1/4(日)〜1/10(土) → 月曜 1/5 → W2
+describe('effectiveWeekStart', () => {
+	it('ISO week numbers force Monday; otherwise the setting is honoured', () => {
+		expect(effectiveWeekStart(0, { weekNumber: true })).toBe(1);
+		expect(effectiveWeekStart(1, { weekNumber: true })).toBe(1);
+		expect(effectiveWeekStart(0)).toBe(0);
+		expect(effectiveWeekStart(0, { weekNumber: false })).toBe(0);
 	});
 });
 
-describe('week folder with ISO week number', () => {
+describe('week folder with ISO week number (strict ISO: Monday-based)', () => {
 	it.each([
 		['n', 1, d(2026, 9, 19), 'n/2026/09/14(W38)'],
 		['n', 1, d(2026, 9, 1), 'n/2026/08/31(W36)'],
 		['n', 1, d(2026, 9, 7), 'n/2026/09/07(W37)'],
-		['n', 0, d(2026, 9, 19), 'n/2026/09/13(W38)'],
-		['n', 1, d(2026, 1, 1), 'n/2025/12/29(W01)'], // 2桁ゼロ埋め
+		['n', 0, d(2026, 9, 19), 'n/2026/09/14(W38)'], // 日曜設定でも月曜固定
+		['n', 0, d(2026, 9, 20), 'n/2026/09/14(W38)'], // 日曜当日も前の月曜の週
+		['n', 1, d(2026, 1, 1), 'n/2025/12/29(W01)'], // 2桁ゼロ埋め・年またぎ
+		['n', 1, d(2027, 1, 1), 'n/2026/12/28(W53)'],
 	] as Array<[string, WeekStart, Date, string]>)('base=%s weekStart=%i %o → %s', (base, ws, now, expected) => {
 		expect(resolveDatedPath('week', base, ws, now, { weekNumber: true })).toBe(expected);
+	});
+	it('Sunday weeks still work when the number is off', () => {
+		expect(resolveDatedPath('week', 'n', 0, d(2026, 9, 19))).toBe('n/2026/09/13');
 	});
 	it('is off unless requested, and ignored for other grains', () => {
 		expect(resolveDatedPath('week', 'n', 1, d(2026, 9, 19))).toBe('n/2026/09/14');
