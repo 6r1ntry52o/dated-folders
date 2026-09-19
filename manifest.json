@@ -1,0 +1,10 @@
+{
+	"id": "dated-folders",
+	"name": "Dated Folders",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.7",
+	"description": "Create new notes directly in a date-based folder ({base}/YYYY/MM/DD) by year, month, week, or day.",
+	"author": "6r1ntr",
+	"authorUrl": "https://github.com/6r1ntry52o",
+	"isDesktopOnly": false
+}
