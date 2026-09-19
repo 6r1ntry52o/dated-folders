@@ -61,7 +61,7 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Granularity')
-			.setDesc('year → YYYY, month → YYYY/MM, week → YYYY/MM/DD of the week start, day → YYYY/MM/DD')
+			.setDesc('year → YYYY, month → YYYY/MM, week → YYYY/MM/DD(Wnn) of the week start, day → YYYY/MM/DD')
 			.addDropdown((dd) =>
 				dd
 					.addOptions({ year: 'Year', month: 'Month', week: 'Week', day: 'Day' })
@@ -85,6 +85,16 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 							refreshPreview();
 							await save();
 						}),
+				);
+			new Setting(containerEl)
+				.setName('Append ISO week number')
+				.setDesc('Name the week folder "DD(Wnn)" with the ISO 8601 week number (1–53). With Sunday weeks, the number of the Monday in that week is used.')
+				.addToggle((t) =>
+					t.setValue(s.weekNumber).onChange(async (value) => {
+						s.weekNumber = value;
+						refreshPreview();
+						await save();
+					}),
 				);
 		}
 

@@ -15,7 +15,7 @@ export class FolderEnsurer {
 
 	targetPath(now: Date = new Date()): string {
 		const s = this.p.settings;
-		return normalizePath(resolveDatedPath(s.grain, s.baseFolder, s.weekStart, now));
+		return normalizePath(resolveDatedPath(s.grain, s.baseFolder, s.weekStart, now, { weekNumber: s.weekNumber }));
 	}
 
 	/** 同期。パッチから毎回呼ばれる。パスが変わっていれば再ルックアップ（ロールオーバー直後の保険） */

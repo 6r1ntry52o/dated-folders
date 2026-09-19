@@ -1,6 +1,6 @@
 # Dated Folders
 
-Create new notes directly in a date-based folder such as `notes/2026/09/19`, chosen from the creation time. Pick the granularity: year (`YYYY`), month (`YYYY/MM`), week (`YYYY/MM/DD` of the week start, Monday or Sunday), or day (`YYYY/MM/DD`).
+Create new notes directly in a date-based folder such as `notes/2026/09/19`, chosen from the creation time. Pick the granularity: year (`YYYY`), month (`YYYY/MM`), week (`YYYY/MM/DD(Wnn)` of the week start, Monday or Sunday, with the ISO week number), or day (`YYYY/MM/DD`).
 
 ## How it works
 
@@ -15,6 +15,7 @@ Create new notes directly in a date-based folder such as `notes/2026/09/19`, cho
 | Base folder | Root of the dated tree. Empty means the vault root. |
 | Granularity | year / month / week / day |
 | Week starts on | Monday or Sunday (week granularity only) |
+| Append ISO week number | Name week folders `DD(Wnn)` with the ISO 8601 week number. For Sunday weeks the Monday inside that week decides the number. |
 | Placement method | Automatic (recommended), direct placement only, or move after creation only |
 | Apply to notes created from links | Route `[[link]]`-created notes too. Links containing a folder are always respected. |
 | File extensions | Default `md`. Add `canvas` to route new canvases. |
