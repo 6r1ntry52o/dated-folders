@@ -50,7 +50,8 @@ export function datedSegments(grain: Grain, now: Date, weekStart: WeekStart, opt
 		case 'month':
 			return [y, m];
 		case 'week':
-			return [y, m, opts.weekNumber ? `${d}(W${pad2(isoWeek(b))})` : d];
+			// 週は YYYY/MM-DD(Wnn) の 2 階層＝月フォルダを挟まない（分割しすぎを避ける）
+			return [y, opts.weekNumber ? `${m}-${d}(W${pad2(isoWeek(b))})` : `${m}-${d}`];
 		case 'day':
 			return [y, m, d];
 	}

@@ -61,7 +61,7 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Granularity')
-			.setDesc('year → YYYY, month → YYYY/MM, week → YYYY/MM/DD(Wnn) of the week start, day → YYYY/MM/DD')
+			.setDesc('year → YYYY, month → YYYY/MM, week → YYYY/MM-DD(Wnn) of the week start, day → YYYY/MM/DD')
 			.addDropdown((dd) =>
 				dd
 					.addOptions({ year: 'Year', month: 'Month', week: 'Week', day: 'Day' })
@@ -76,7 +76,7 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 		if (s.grain === 'week') {
 			new Setting(containerEl)
 				.setName('Append ISO week number')
-				.setDesc('Name the week folder "DD(Wnn)" with the ISO 8601 week number (1–53). ISO weeks always start on Monday, so this fixes the week start to Monday.')
+				.setDesc('Name the week folder "MM-DD(Wnn)" with the ISO 8601 week number (1–53). ISO weeks always start on Monday, so this fixes the week start to Monday.')
 				.addToggle((t) =>
 					t.setValue(s.weekNumber).onChange(async (value) => {
 						s.weekNumber = value;
