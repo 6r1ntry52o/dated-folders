@@ -39,17 +39,15 @@ export default class DatedFoldersPlugin extends Plugin {
 	}
 
 	onunload(): void {
-		// パッチ解除・イベント解除・タイマー解除はすべて register() 済み
+		// パッチ解除・イベント解除はすべて register() 済み
 	}
 
 	private async activate(): Promise<void> {
-		try {
-			await this.ensurer.ensure();
-		} catch (e) {
-			this.reportEnsureError(e);
-		}
-		this.ensurer.start();
+		// フォルダはここで作らない（ノート作成時に遅延生成）
 		this.applyStrategy();
+		if (this.settings.pruneEmptyDatedFolders) {
+			await this.ensurer.prune(this.ensurer.targetPath()).catch((e) => this.log.error(e));
+		}
 	}
 
 	applyStrategy(): void {
@@ -65,17 +63,14 @@ export default class DatedFoldersPlugin extends Plugin {
 				new Notice('Dated Folders: direct placement is unavailable in this version; notes will be moved after creation instead.');
 			}
 		}
-		if (s !== 'patch' || !this.patch.active) this.move.enable();
+		// move は常に待機する。フォルダ未作成の初回ノートは patch が素通りし、move が作成して移すため
+		// （'patch' 専用モードでは「patch が未作成で素通りした直後のノート」だけを扱う）
+		this.move.enable();
 		this.log.debug('strategy', s, { patch: this.patch.active, move: this.move.active });
 	}
 
 	async onSettingsChanged(): Promise<void> {
-		await this.saveSettings();
-		try {
-			await this.ensurer.ensure();
-		} catch (e) {
-			this.reportEnsureError(e);
-		}
+		await this.saveSettings(); // フォルダは作らない（設定編集のたびに生成されるのを避ける）
 		this.applyStrategy();
 	}
 

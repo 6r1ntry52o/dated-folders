@@ -6,7 +6,7 @@ Create new notes directly in a date-based folder such as `notes/2026/09/19`, cho
 
 - **Direct placement.** When the core asks where a new note should go (Ctrl+N, the ribbon, or clicking an unresolved `[[link]]`), the plugin answers with today's dated folder. The note is created there, so there is no move afterwards and no link rewriting.
 - **Fallback.** Notes created through other paths (some plugin APIs bypass the question above) are moved into the dated folder right after you open them, but only when they are empty, landed in the core's default location, and were opened within a second of creation. Notes created elsewhere on purpose, such as daily notes, are left alone.
-- Dated folders are created ahead of time on startup and at midnight, so the folder always exists when you need it.
+- **Folders are created lazily.** A dated folder is created only when a note is actually created in it, never on startup, at midnight, or when you edit a setting. Changing the base folder or granularity therefore leaves no stray folders behind. The first note of a new date is created in the core default location and moved into the new folder right after it opens; later notes of that date are placed directly.
 
 ## Settings
 

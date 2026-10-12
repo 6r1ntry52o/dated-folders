@@ -1,34 +1,28 @@
 import { normalizePath, type TFolder } from 'obsidian';
 import type DatedFoldersPlugin from './main';
-import { msUntilNextMidnight, resolveDatedPath } from './path-resolver';
+import { resolveDatedPath } from './path-resolver';
 
-/** 当日フォルダの事前生成・同期ルックアップ・日付ロールオーバー監視 */
+/**
+ * 当日フォルダの同期ルックアップと、ノート作成時の遅延生成。
+ * フォルダは「ノートを作る瞬間」にだけ作る（起動・設定変更・日付変化では作らない）。
+ * 設定文字列を編集中に途中状態のフォルダが量産されるのを避けるため。
+ */
 export class FolderEnsurer {
-	private cachedPath: string | null = null;
-	private cached: TFolder | null = null;
-	private midnightTimer: number | null = null;
 	private ensuring: Promise<TFolder | null> | null = null;
 
-	constructor(private p: DatedFoldersPlugin) {
-		this.p.register(() => this.clearMidnight());
-	}
+	constructor(private p: DatedFoldersPlugin) {}
 
 	targetPath(now: Date = new Date()): string {
 		const s = this.p.settings;
 		return normalizePath(resolveDatedPath(s.grain, s.baseFolder, s.weekStart, now, { weekNumber: s.weekNumber }));
 	}
 
-	/** 同期。パッチから毎回呼ばれる。パスが変わっていれば再ルックアップ（ロールオーバー直後の保険） */
+	/** 同期。パッチから毎回呼ばれる。フォルダが無ければ null（作らない）。毎回引くのでキャッシュの陳腐化もない */
 	currentFolder(): TFolder | null {
-		const path = this.targetPath();
-		if (path !== this.cachedPath || !this.cached) {
-			this.cachedPath = path;
-			this.cached = this.lookup(path);
-		}
-		return this.cached;
+		return this.lookup(this.targetPath());
 	}
 
-	/** 非同期。起動時・設定変更時・日付変化時。同時呼び出しは1本にまとめる */
+	/** 非同期。ノート作成時（遅延生成）と明示コマンドからだけ呼ぶ。同時呼び出しは1本にまとめる */
 	ensure(now: Date = new Date()): Promise<TFolder | null> {
 		if (this.ensuring) return this.ensuring;
 		this.ensuring = this.doEnsure(now).finally(() => {
@@ -54,43 +48,10 @@ export class FolderEnsurer {
 				}
 			}
 		}
-		this.cachedPath = path;
-		this.cached = this.lookup(path);
-		this.scheduleMidnight(now);
+		const folder = this.lookup(path);
 		if (this.p.settings.pruneEmptyDatedFolders) await this.prune(path);
-		this.p.log.debug('ensure', path, this.cached ? 'ok' : 'missing');
-		return this.cached;
-	}
-
-	start(): void {
-		// 保険①: 分単位ポーリング（タイマーが飛んだ・時計が変わった）
-		this.p.registerInterval(
-			window.setInterval(() => {
-				if (this.targetPath() !== this.cachedPath) void this.ensure().catch((e) => this.p.log.error(e));
-			}, 60_000),
-		);
-		// 保険②: スリープ復帰・モバイル復帰
-		this.p.registerDomEvent(document, 'visibilitychange', () => {
-			if (!document.hidden && this.targetPath() !== this.cachedPath) {
-				void this.ensure().catch((e) => this.p.log.error(e));
-			}
-		});
-	}
-
-	/** 本線: 次の 00:00:01 に一発。unload 時は constructor の register で解除 */
-	private scheduleMidnight(now: Date): void {
-		this.clearMidnight();
-		this.midnightTimer = window.setTimeout(() => {
-			this.midnightTimer = null;
-			void this.ensure().catch((e) => this.p.log.error(e));
-		}, msUntilNextMidnight(now));
-	}
-
-	private clearMidnight(): void {
-		if (this.midnightTimer !== null) {
-			window.clearTimeout(this.midnightTimer);
-			this.midnightTimer = null;
-		}
+		this.p.log.debug('ensure', path, folder ? 'ok' : 'missing');
+		return folder;
 	}
 
 	private lookup(path: string): TFolder | null {
@@ -106,8 +67,8 @@ export class FolderEnsurer {
 		}
 	}
 
-	/** 自分が作った・空・現在の対象でない フォルダだけを削除する */
-	private async prune(current: string): Promise<void> {
+	/** 自分が作った・空・現在の対象でない フォルダだけを削除する（起動時と遅延生成の後に呼ぶ） */
+	async prune(current: string): Promise<void> {
 		const vault = this.p.app.vault;
 		const keep: string[] = [];
 		let changed = false;

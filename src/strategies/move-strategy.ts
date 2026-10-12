@@ -47,6 +47,8 @@ export class MoveStrategy implements PlacementStrategy {
 		try {
 			if (!(f instanceof TFile) || !f.parent) return;
 			if (Date.now() - this.p.patch.lastHitAt < PATCH_HIT_WINDOW_MS) return; // ④ A が処理した
+			// 'patch' 専用: A が「フォルダ未作成」で素通りした直後のノートだけ対象（それ以外は移さない）
+			if (this.p.settings.strategy === 'patch' && this.p.patch.active && Date.now() - this.p.patch.lastMissAt >= PATCH_HIT_WINDOW_MS) return;
 			const target = this.p.ensurer.targetPath();
 			if (!appliesToCreated(this.p.settings, f.extension, f.stat.size, f.parent.path, target)) return; // ①②③
 			if (!this.landedOnDefault(f.parent)) return; // ⑤

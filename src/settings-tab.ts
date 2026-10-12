@@ -47,7 +47,7 @@ export class DatedFoldersSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Base folder')
-			.setDesc('New notes go under this folder. Leave empty for the vault root. Missing folders are created on startup.')
+			.setDesc('New notes go under this folder. Leave empty for the vault root. The dated folder is created when a note is created in it.')
 			.addText((text) => {
 				text.setPlaceholder('e.g. notes').setValue(s.baseFolder);
 				new FolderSuggest(this.app, text.inputEl);

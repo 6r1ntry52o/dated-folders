@@ -10,6 +10,8 @@ type GetNewFileParent = (this: FileManager, sourcePath: string, newFilePath?: st
 export class PatchStrategy implements PlacementStrategy {
 	/** 経路B が「A が処理済み」を判定する目印 */
 	lastHitAt = 0;
+	/** 対象フォルダが未作成で素通りした時刻。move が遅延生成して移す目印 */
+	lastMissAt = 0;
 	/** コアの元実装（パッチ有効中のみ）。B の「コア既定の親」判定に使う */
 	orig: GetNewFileParent | null = null;
 	private uninstall: (() => void) | null = null;
@@ -36,7 +38,8 @@ export class PatchStrategy implements PlacementStrategy {
 						if (!appliesToNew(plugin.settings, sourcePath, newFilePath)) return fallback();
 						const folder = plugin.ensurer.currentFolder();
 						if (!folder) {
-							void plugin.ensurer.ensure().catch((e) => plugin.log.error(e)); // 次回のために掘っておく
+							// 未作成。getNewFileParent は同期なので作れない → コア既定で作らせ、move が作成して移す
+							self.lastMissAt = Date.now();
 							return fallback();
 						}
 						self.lastHitAt = Date.now();
